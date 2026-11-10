@@ -74,10 +74,10 @@ fn check_args(args: &Args) -> bool{
             args.text.is_none()
         },
         Some(Action::Write) => {
-            if (args.input.is_some() && args.input.is_some()) {
+            if args.input.is_some() && args.input.is_some() {
                 return false;
             }
-            if (args.input.is_none() && args.input.is_none()) {
+            if args.input.is_none() && args.input.is_none() {
                 return false;
             }
             // Reference: Rust if let
