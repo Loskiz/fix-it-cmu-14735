@@ -35,6 +35,18 @@ struct Args {
     text: Option<String>,
 }
 
+struct User {
+    name: String,
+    salt: [u8; 16],
+    name_hashes: Vec<[u8; 32]>,
+    nonce: [u8; 24],
+    ciphertext: Vec<u8>,
+}
+
+struct Db {
+    users: Vec<User>,
+}
+
 // Reference: The match Control Flow Construct
 // https://doc.rust-lang.org/book/ch06-02-match.html
 fn parse_action(word: &str) -> Option<Action> {
