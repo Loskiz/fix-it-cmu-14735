@@ -49,6 +49,51 @@ fn parse_action(word: &str) -> Option<Action> {
 // Reference: Tutorial for the Derive API
 // https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html
 
+fn check_args(args: &Args) -> bool{
+    if args.user.is_none() {
+        return false;
+    }
+
+    return match &args.action {
+        Some(Action::Register) => {
+            args.key.is_some() &&
+            args.input.is_none() &&
+            args.output.is_none() &&
+            args.text.is_none()
+        }
+        Some(Action::Create) => {
+            args.file.is_some() &&
+            args.input.is_none() &&
+            args.output.is_none() &&
+            args.text.is_none()
+        },
+        Some(Action::Read) => {
+            args.key.is_some() &&
+            args.file.is_some() &&
+            args.input.is_none() &&
+            args.text.is_none()
+        },
+        Some(Action::Write) => {
+            if (args.input.is_some() && args.input.is_some()) {
+                return false;
+            }
+            if (args.input.is_none() && args.input.is_none()) {
+                return false;
+            }
+            // Reference: Rust if let
+            // https://doc.rust-lang.org/rust-by-example/flow_control/if_let.html
+            if let Some(text) = &args.text {
+                if text.is_empty() {
+                    return false;
+                }
+            }
+            args.key.is_some() &&
+            args.file.is_some() &&
+            args.output.is_none()
+        },
+        None => false,
+    };
+}
 
 fn parse_args() -> Result<Args, clap::Error>{
     Args::try_parse_from(env::args())
