@@ -36,12 +36,20 @@ struct Args {
     text: Option<String>,
 }
 
+// Reference: Serde: Using derive
+// https://serde.rs/derive.html
+#[derive(Serialize, Deserialize)]
 struct User {
     name: String,
     salt: [u8; 16],
     name_hashes: Vec<[u8; 32]>,
     nonce: [u8; 24],
     ciphertext: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Db {
+    users: Vec<User>,
 }
 
 struct Db {
