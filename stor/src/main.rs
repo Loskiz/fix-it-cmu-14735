@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use std::{env, process::ExitCode};
+use std::{env, process::ExitCode, fs, io};
 use clap::{Parser, ValueEnum};
 
 #[derive(Clone, ValueEnum)]
@@ -109,6 +109,25 @@ fn check_args(args: &Args) -> bool{
 
 fn parse_args() -> Result<Args, clap::Error>{
     Args::try_parse_from(env::args())
+}
+
+fn db_load() -> io::Result<Db> {
+    match fs::read("enc.db") {
+        Ok(raw) => { return db_parse(&raw)}
+        Err(error) => {
+            if error.kind() == io::ErrorKind::NotFound {
+                return Ok(Db {
+                    users: Vec::new(),
+                });
+            }
+
+            return Err(error);
+        }
+    }
+}
+
+db_pars(raw: &[u8]) -> io::Result<Db> {
+
 }
 
 fn main() {
