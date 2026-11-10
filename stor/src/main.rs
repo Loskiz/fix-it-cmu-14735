@@ -2,6 +2,7 @@
 
 use std::{env, process::ExitCode, fs, io};
 use clap::{Parser, ValueEnum};
+use serde::{Serialize, Deserialize}
 
 #[derive(Clone, ValueEnum)]
 enum Action{
@@ -126,7 +127,7 @@ fn db_load() -> io::Result<Db> {
     }
 }
 
-db_pars(raw: &[u8]) -> io::Result<Db> {
+db_parse(raw: &[u8]) -> io::Result<Db> {
 
 }
 
