@@ -161,6 +161,18 @@ fn db_save(db:&Db) -> io::Result<()> {
     return fs::write("enc.db" ,raw);
 }
 
+fn db_find(db: &Db, name: &str) -> Option<usize> {
+    // Somehow it just occured to me I should have used a map
+    // Oh well
+    for i in 0..db.users.len() {
+        if db.users[i].name == name {
+            return Some(i);
+        }
+    }
+
+    return None;
+}
+
 fn main() {
     println!("Hello, world!");
 }
