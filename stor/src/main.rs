@@ -138,15 +138,16 @@ fn db_parse(raw: &[u8]) -> io::Result<Db> {
 
     match result {
         Ok(db) => {
-            for u in db.users {
+            for user in &db.users {
                 if user.ciphertext.len() < 16 {
                     //println("ciphertext too short to encrypt!")
                     return Err(io::Error::new(
-                        io::ErrorKind::InvalidData,
-                        , "ciphertext too short to encrypt!"
+                        io::ErrorKind::InvalidData, "ciphertext too short to encrypt!"
                     ));
                 }
             }
+
+            return Ok(db);
         }
         Err(error) => {
             return Err(error.into());
