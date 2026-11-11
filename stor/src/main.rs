@@ -2,7 +2,7 @@
 
 use std::{env, process::ExitCode, fs, io};
 use clap::{Parser, ValueEnum};
-use serde::{Serialize, Deserialize}
+use serde::{Serialize, Deserialize};
 
 #[derive(Clone, ValueEnum)]
 enum Action{
@@ -48,10 +48,6 @@ struct User {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Db {
-    users: Vec<User>,
-}
-
 struct Db {
     users: Vec<User>,
 }
@@ -135,8 +131,28 @@ fn db_load() -> io::Result<Db> {
     }
 }
 
-db_parse(raw: &[u8]) -> io::Result<Db> {
+fn db_parse(raw: &[u8]) -> io::Result<Db> {
+    // Reference: Serde Json:
+    // https://docs.rs/serde_json/latest/serde_json/
+    let result:serde_json::Result<Db> =  serde_json::from_slice(raw);
 
+    match result {
+        Ok(db) => {
+            for u in db.users {
+                if user.ciphertext.len() < 16 {
+                    //println("ciphertext too short to encrypt!")
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        , "ciphertext too short to encrypt!"
+                    ));
+                }
+            }
+        }
+        Err(error) => {
+            return Err(error.into());
+        }
+    }
+       
 }
 
 fn main() {
