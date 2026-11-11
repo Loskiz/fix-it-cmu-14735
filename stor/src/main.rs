@@ -3,6 +3,7 @@
 use std::{env, process::ExitCode, fs, io};
 use clap::{Parser, ValueEnum};
 use serde::{Serialize, Deserialize};
+use libsodium_rs::crypto_pwhash;
 
 #[derive(Clone, ValueEnum)]
 enum Action{
@@ -171,6 +172,12 @@ fn db_find(db: &Db, name: &str) -> Option<usize> {
     }
 
     return None;
+}
+
+fn derive_key(key: &str, salt: &[u8]) -> libsodium_rs::Result<Vec<u8>> {
+    // Reference: libsodium_rs Module crypto_pwhash
+    // https://docs.rs/libsodium-rs/latest/libsodium_rs/crypto_pwhash/index.html
+    return crypto_pwhash::pwhash(32, key.as_bytes(), salt, crypto_pwhash::OPSLIMIT_INTERACTIVE, crypto_pwhash::MEMLIMIT_INTERACTIVE, crypto_pwhash::ALG_ARGON2ID13);
 }
 
 fn main() {
