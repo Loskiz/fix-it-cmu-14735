@@ -4,6 +4,7 @@ use std::{env, process::ExitCode, fs, io};
 use clap::{Parser, ValueEnum};
 use serde::{Serialize, Deserialize};
 use libsodium_rs::crypto_pwhash;
+use libsodium_rs::crypto_generichash;
 
 #[derive(Clone, ValueEnum)]
 enum Action{
@@ -178,6 +179,16 @@ fn derive_key(key: &str, salt: &[u8]) -> libsodium_rs::Result<Vec<u8>> {
     // Reference: libsodium_rs Module crypto_pwhash
     // https://docs.rs/libsodium-rs/latest/libsodium_rs/crypto_pwhash/index.html
     return crypto_pwhash::pwhash(32, key.as_bytes(), salt, crypto_pwhash::OPSLIMIT_INTERACTIVE, crypto_pwhash::MEMLIMIT_INTERACTIVE, crypto_pwhash::ALG_ARGON2ID13);
+}
+
+fn hash_filename(user: &User, filename: &str) -> libsodium_rs::Result<Vec<u8>> {
+    // Reference: libsodium_rs Module  crypto_generichash
+    // https://docs.rs/libsodium-rs/latest/libsodium_rs/crypto_generichash/index.html
+    return crypto_generichash::generichash(
+        filename.as_bytes(),
+        Some(&user.salt),
+        32,
+    );
 }
 
 fn main() {
