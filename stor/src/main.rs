@@ -156,6 +156,11 @@ fn db_parse(raw: &[u8]) -> io::Result<Db> {
        
 }
 
+fn db_save(db:&Db) -> io::Result<()> {
+    let raw = serde_json::to_vec(db)?;
+    return fs::write("enc.db" ,raw);
+}
+
 fn main() {
     println!("Hello, world!");
 }
