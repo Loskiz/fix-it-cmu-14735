@@ -289,6 +289,35 @@ fn do_register(db: &mut Db, name: &str, password: &str) -> io::Result<()> {
     return Ok(());
 }
 
+fn do_create(db: &mut Db, name: &str, filename: &str) -> io::Result<()> {
+    let index = match db_find(db, name) {
+        Some(index) => index,
+        None => {
+            return Err(io::Error::new(io::ErrorKind::NotFound, "user does not exist"));
+        }
+    };
+
+    let user = &mut db.users[index];
+    let name_hash = hash_filename(user, filename).map_err(io::Error::other)?;
+    if has_name_hash(user, &name_hash) {
+        return Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "file already exists",
+        ));
+    }
+
+    let name_hash = name_hash.try_into().map_err(|_| {
+        io::Error::new(io::ErrorKind::InvalidData, "invalid filename hash length")
+    })?;
+    user.name_hashes.push(name_hash);
+
+    db_save(db)?;
+
+    println!("File '{}' has been created for user '{}'", filename, name);
+    return Ok(());
+}
+
+
 
 fn main() {
     println!("Hello, world!");
