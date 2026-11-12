@@ -1,7 +1,8 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use std::{env, process::ExitCode, fs, io};
+use std::{env, fs, io};
 use clap::{Parser, ValueEnum};
+use libsodium_rs::crypto_aead::xchacha20poly1305;
 use serde::{Serialize, Deserialize};
 use libsodium_rs::crypto_pwhash;
 use libsodium_rs::crypto_generichash;
@@ -195,6 +196,60 @@ fn hash_filename(user: &User, filename: &str) -> libsodium_rs::Result<Vec<u8>> {
         Some(&user.salt),
         32,
     );
+}
+
+fn has_name_hash(user: &User, name_hash: &[u8]) -> bool {
+    for hash in &user.name_hashes {
+        if hash.as_slice() == name_hash {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Reference Libsodium Authenticate Encryption
+// https://github.com/jedisct1/libsodium-rs#authenticated-encryption
+fn encrypt_files(user: &mut User, key: &[u8], files: &[UserFile]) -> io::Result<()> {
+    let plaintext = serde_json::to_vec(files)?;
+    let nonce = xchacha20poly1305::Nonce::generate();
+    let key = xchacha20poly1305::Key::from_bytes(key).map_err(io::Error::other)?;
+    
+    let ciphertext = xchacha20poly1305::encrypt(
+        &plaintext,
+        Some(user.name.as_bytes()),
+        &nonce,
+        &key,
+    ).map_err(io::Error::other)?;
+
+    user.nonce = *nonce.as_bytes();
+    user.ciphertext = ciphertext;
+
+    return Ok(());
+}
+
+fn decrypt_files(user: &User, key: &[u8]) -> io::Result<Vec<UserFile>> {
+    let nonce = xchacha20poly1305::Nonce::from_bytes(user.nonce);
+    let key = xchacha20poly1305::Key::from_bytes(key).map_err(io::Error::other)?;
+
+    let plaintext = xchacha20poly1305::decrypt(
+        &user.ciphertext,
+        Some(user.name.as_bytes()),
+        &nonce,
+        &key,
+    ).map_err(io::Error::other)?;
+
+    let files: Vec<UserFile> = serde_json::from_slice(&plaintext)?;
+    for file in &files {
+        if !has_name_hash(user, &file.name_hash) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "user does not have name hash",
+            ));
+        }
+    }
+
+    return Ok(files);
 }
 
 fn main() {
