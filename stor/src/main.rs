@@ -317,7 +317,28 @@ fn do_create(db: &mut Db, name: &str, filename: &str) -> io::Result<()> {
     return Ok(());
 }
 
+fn auth_and_load(db: &Db, user: &str, filename: &str,key: &str, ) -> io::Result<(usize, Vec<u8>, Vec<u8>, Vec<UserFile>)> {
+    // It is more painfully clear at this point I should have used a map
+    // But whatever
+    // Find user
+    let index = match db_find(db, user) {
+        Some(index) => index,
+        None => {
+            return Err(io::Error::new(io::ErrorKind::NotFound, "user does not exist"));
+        }
+    };
+    // Find file
+    let u = &db.users[index];
+    let name_hash = hash_filename(u, filename).map_err(io::Error::other)?;
+    if !has_name_hash(u, &name_hash) {
+        return Err(io::Error::new(io::ErrorKind::NotFound, "file does not exist"));
+    }
 
+    let k = derive_key(key, &u.salt).map_err(io::Error::other)?;
+    let uf = decrypt_files(u, &k)?;
+
+    return Ok((index, name_hash, k, uf));
+}
 
 fn main() {
     println!("Hello, world!");
