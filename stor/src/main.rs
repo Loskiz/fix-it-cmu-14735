@@ -384,6 +384,29 @@ fn do_read(db: &Db, user: &str, file: &str, key: &str, out: Option<&str>) -> io:
     return stdout.flush();
 }
 
+fn do_write(db: &mut Db, user: &str,file: &str,key: &str,input: Option<&str>,text: Option<&str>) -> io::Result<()> {
+    let (index, name_hash, k, mut uf) = auth_and_load(db, user, file, key)?;
+
+    let data = match (input, text) {
+    (Some(path), _) => fs::read(path)?,
+    (None, Some(text)) => text.as_bytes().to_vec(),
+    (None, None) => {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "no text or file input",
+        ));
+    }
+};
+    set_file(&mut uf, name_hash, data);
+
+    let u = &mut db.users[index];
+    encrypt_files(u, &k, &uf)?;
+    db_save(db)?;
+
+    println!("Data written to file '{}' by user '{}'", file, user);
+    return Ok(());
+}
+
 fn main() {
     println!("Hello, world!");
 }
