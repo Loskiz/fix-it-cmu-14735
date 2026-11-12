@@ -350,6 +350,19 @@ fn find_file(uf: &[UserFile], name_hash: &[u8])-> Option<usize>{
     return None;
 }
 
+fn set_file(uf: &mut Vec<UserFile>, name_hash: Vec<u8>, data: Vec<u8>) {
+    match find_file(uf, &name_hash) {
+        Some(i) => {
+            for byte in data {
+                uf[i].data.push(byte);
+            }
+        }
+        None => {
+            uf.push(UserFile {name_hash, data});
+        }
+    }
+}
+
 fn do_read(db: &Db, user: &str, file: &str, key: &str, out: Option<&str>) -> io::Result<()> {
     let (_, name_hash, _, uf) = auth_and_load(db, user, file, key)?;
 
