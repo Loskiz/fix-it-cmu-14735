@@ -54,6 +54,12 @@ struct Db {
     users: Vec<User>,
 }
 
+#[derive(Serialize, Deserialize)]
+struct UserFile {
+    name_hash: Vec<u8>,
+    data: Vec<u8>
+}
+
 // Reference: The match Control Flow Construct
 // https://doc.rust-lang.org/book/ch06-02-match.html
 fn parse_action(word: &str) -> Option<Action> {
