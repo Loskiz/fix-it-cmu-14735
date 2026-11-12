@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use std::{env, fs, io, io::Write};
+use std::{env, fs, io, io::Write, process::ExitCode};
 use clap::{Parser, ValueEnum};
 use libsodium_rs::crypto_aead::xchacha20poly1305;
 use serde::{Serialize, Deserialize};
@@ -407,6 +407,44 @@ fn do_write(db: &mut Db, user: &str,file: &str,key: &str,input: Option<&str>,tex
     return Ok(());
 }
 
-fn main() {
-    println!("Hello, world!");
+fn main() -> ExitCode {
+    let a = match parse_args() {
+        Ok(a) => a,
+        Err(_) => {
+            println!("invalid");
+            return ExitCode::from(255);
+        }
+    };
+
+    if !check_args(&a) {
+        println!("invalid");
+        return ExitCode::from(255);
+    }
+
+    let mut db = match db_load() {
+        Ok(db) => db,
+        Err(_) => {
+            println!("invalid");
+            return ExitCode::from(255);
+        }
+    };
+
+    let user = a.user.as_deref().unwrap();
+    let file = a.file.as_deref();
+    let key = a.key.as_deref();
+
+    let result = match a.action.unwrap() {
+        Action::Register => do_register(&mut db, user, key.unwrap()),
+        Action::Create => do_create(&mut db, user, file.unwrap()),
+        Action::Read => do_read(&db, user, file.unwrap(), key.unwrap(), a.output.as_deref()),
+        Action::Write => do_write(&mut db, user, file.unwrap(), key.unwrap(),a.input.as_deref(), a.text.as_deref())
+    };
+
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(_) => {
+            println!("invalid");
+            ExitCode::from(255)
+        }
+    }
 }
