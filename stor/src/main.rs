@@ -252,6 +252,44 @@ fn decrypt_files(user: &User, key: &[u8]) -> io::Result<Vec<UserFile>> {
     return Ok(files);
 }
 
+fn create_user(name: &str, password: &str) -> io::Result<User> {
+    let mut new_user = User {
+        name: name.to_string(),
+        salt: Default::default(),
+        name_hashes: Vec::new(),
+        nonce: Default::default(),
+        ciphertext: Vec::new(),
+    };
+
+    // Create key for user with password
+    libsodium_rs::random::fill_bytes(&mut new_user.salt);
+    let key = derive_key(password, &new_user.salt).map_err(io::Error::other)?;
+    // Create their files
+    let files: Vec<UserFile> = Vec::new();
+    encrypt_files(&mut new_user, &key, &files)?;
+    return Ok(new_user);
+
+}
+
+fn do_register(db: &mut Db, name: &str, password: &str) -> io::Result<()> {
+    // Check if user already exists
+
+    if db_find(db, name).is_some() {
+        return Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "user already exists",
+        ));
+    }
+
+    let user = create_user(name, password)?;
+    db.users.push(user);
+    db_save(db)?;
+
+    println!("User '{}' has been registered", name);
+    return Ok(());
+}
+
+
 fn main() {
     println!("Hello, world!");
 }
