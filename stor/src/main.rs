@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use std::{env, fs, io};
+use std::{env, fs, io, io::Write};
 use clap::{Parser, ValueEnum};
 use libsodium_rs::crypto_aead::xchacha20poly1305;
 use serde::{Serialize, Deserialize};
@@ -348,6 +348,27 @@ fn find_file(uf: &[UserFile], name_hash: &[u8])-> Option<usize>{
     }
 
     return None;
+}
+
+fn do_read(db: &Db, user: &str, file: &str, key: &str, out: Option<&str>) -> io::Result<()> {
+    let (_, name_hash, _, uf) = auth_and_load(db, user, file, key)?;
+
+    let data: &[u8] = match find_file(&uf, &name_hash) {
+        Some(i) => &uf[i].data,
+        None => &[],
+    };
+
+    if let Some(path) = out {
+        let mut output = fs::File::create_new(path)?;
+        return output.write_all(data);
+    }
+
+    // Reference Rust stdout
+    // https://doc.rust-lang.org/std/io/fn.stdout.html
+
+    let mut stdout = io::stdout();
+    stdout.write_all(data)?;
+    return stdout.flush();
 }
 
 fn main() {
