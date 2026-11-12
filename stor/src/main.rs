@@ -340,6 +340,16 @@ fn auth_and_load(db: &Db, user: &str, filename: &str,key: &str, ) -> io::Result<
     return Ok((index, name_hash, k, uf));
 }
 
+fn find_file(uf: &[UserFile], name_hash: &[u8])-> Option<usize>{
+    for i in 0..uf.len() {
+        if uf[i].name_hash.as_slice() == name_hash {
+            return Some(i);
+        }
+    }
+
+    return None;
+}
+
 fn main() {
     println!("Hello, world!");
 }
